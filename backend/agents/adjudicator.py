@@ -17,9 +17,17 @@ llm = ChatGoogleGenerativeAI(
 
 adjudicator_agent = llm.with_structured_output(FinalDecision)
 
+import os
+import json
+
 def load_policy_terms():
-    with open("data/policy_terms.json", "r") as f:
+    # Dynamically find the root data folder
+    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    policy_path = os.path.join(root_dir, "data", "policy_terms.json")
+
+    with open(policy_path, "r") as f:
         return json.load(f)
+
 
 async def adjudicate_claim(claim: ClaimInput, extracted_data: ExtractedMedicalData) -> FinalDecision:
     """

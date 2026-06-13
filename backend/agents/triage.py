@@ -8,7 +8,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 
 # Our strict Pydantic contract
-from models.claims import DocumentVerification
+from models.claims import DocumentVerification, DocumentUpload
 
 # Load environment variables (API Key)
 load_dotenv()
@@ -33,7 +33,7 @@ def encode_image(image_path: str) -> str:
 async def verify_documents(
     claim_category: str,
     required_doc_types: List[str],
-    image_paths: List[str]
+    documents: List[DocumentUpload]
 ) -> DocumentVerification:
     """
     Agent 1: Triage
@@ -63,8 +63,15 @@ async def verify_documents(
     message_content = [{"type": "text", "text": prompt_text}]
 
     # Attach all uploaded images to the same message
-    for path in image_paths:
-        base64_image = encode_image(path)
+    # Attach all uploaded images to the same message
+    for doc in documents:
+        # Pull base64 if it came from the UI, otherwise encode the local file path
+        base64_image = doc.base64_data if doc.base64_data else encode_image(doc.content_path)
+
+        # Clean the string if it came from the browser
+        if "base64," in base64_image:
+            base64_image = base64_image.split("base64,")[1]
+
         message_content.append({
             "type": "image_url",
             "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}

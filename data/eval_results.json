@@ -1,0 +1,98 @@
+[
+  {
+    "case_id": 1,
+    "description": "Member submits two prescriptions for a consultation claim that requires a prescription and a hospital bill.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "UNKNOWN",
+    "trace": "System Error: Error calling model 'gemini-2.5-flash' (RESOURCE_EXHAUSTED): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\\nPlease retry in 36.733072523s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '36s'}]}}"
+  },
+  {
+    "case_id": 2,
+    "description": "Member uploads a valid prescription but a blurry, unreadable photo of their pharmacy bill.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "UNKNOWN",
+    "trace": "System Error: Error calling model 'gemini-2.5-flash' (RESOURCE_EXHAUSTED): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\\nPlease retry in 34.471467798s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '34s'}]}}"
+  },
+  {
+    "case_id": 3,
+    "description": "The prescription is for Rajesh Kumar but the hospital bill is for a different patient, Arjun Mehta.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "UNKNOWN",
+    "trace": "System Error: Error calling model 'gemini-2.5-flash' (RESOURCE_EXHAUSTED): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\\nPlease retry in 32.162977769s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '32s'}]}}"
+  },
+  {
+    "case_id": 4,
+    "description": "Complete, valid consultation claim with correct documents, valid member, covered treatment, within all limits.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "UNKNOWN",
+    "trace": "System Error: 2 validation errors for ClaimInput\ndocuments.0.file_name\n  Field required [type=missing, input_value={'file_id': 'F007', 'actu...g', 'Vitamin C 500mg']}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\ndocuments.1.file_name\n  Field required [type=missing, input_value={'file_id': 'F008', 'actu...: 200}], 'total': 1500}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing"
+  },
+  {
+    "case_id": 5,
+    "description": "Member joined 2024-09-01. Claims for diabetes treatment on 2024-10-15, which is within the 90-day waiting period for diabetes.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "UNKNOWN",
+    "trace": "System Error: 2 validation errors for ClaimInput\ndocuments.0.file_name\n  Field required [type=missing, input_value={'file_id': 'F009', 'actu...g', 'Glimepiride 1mg']}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\ndocuments.1.file_name\n  Field required [type=missing, input_value={'file_id': 'F010', 'actu...-10-15', 'total': 3000}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing"
+  },
+  {
+    "case_id": 6,
+    "description": "Bill includes root canal treatment (covered) and teeth whitening (cosmetic, excluded). System must approve only the covered procedure.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "UNKNOWN",
+    "trace": "System Error: 1 validation error for ClaimInput\ndocuments.0.file_name\n  Field required [type=missing, input_value={'file_id': 'F011', 'actu...4000}], 'total': 12000}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing"
+  },
+  {
+    "case_id": 7,
+    "description": "MRI scan costing \u00e2\u201a\u00b915,000 submitted without pre-authorization. Policy requires pre-auth for MRI above \u00e2\u201a\u00b910,000.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "UNKNOWN",
+    "trace": "System Error: 3 validation errors for ClaimInput\ndocuments.0.file_name\n  Field required [type=missing, input_value={'file_id': 'F012', 'actu...: ['MRI Lumbar Spine']}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\ndocuments.1.file_name\n  Field required [type=missing, input_value={'file_id': 'F013', 'actu...e': 'MRI Lumbar Spine'}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\ndocuments.2.file_name\n  Field required [type=missing, input_value={'file_id': 'F014', 'actu...5000}], 'total': 15000}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing"
+  },
+  {
+    "case_id": 8,
+    "description": "Claimed amount of \u00e2\u201a\u00b97,500 exceeds the per-claim limit of \u00e2\u201a\u00b95,000.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "UNKNOWN",
+    "trace": "System Error: 2 validation errors for ClaimInput\ndocuments.0.file_name\n  Field required [type=missing, input_value={'file_id': 'F015', 'actu..., 'Probiotics', 'ORS']}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\ndocuments.1.file_name\n  Field required [type=missing, input_value={'file_id': 'F016', 'actu... 5500}], 'total': 7500}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing"
+  },
+  {
+    "case_id": 9,
+    "description": "Member EMP008 has already submitted 3 claims today before this one arrives. This is the 4th claim from the same member on the same day.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "UNKNOWN",
+    "trace": "System Error: 2 validation errors for ClaimInput\ndocuments.0.file_name\n  Field required [type=missing, input_value={'file_id': 'F017', 'actu...r_name': 'Dr. S. Khan'}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\ndocuments.1.file_name\n  Field required [type=missing, input_value={'file_id': 'F018', 'actu...ntent': {'total': 4800}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing"
+  },
+  {
+    "case_id": 10,
+    "description": "Valid claim at Apollo Hospitals, a network hospital. Network discount must be applied before co-pay.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "UNKNOWN",
+    "trace": "System Error: 2 validation errors for ClaimInput\ndocuments.0.file_name\n  Field required [type=missing, input_value={'file_id': 'F019', 'actu... 'Salbutamol Inhaler']}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\ndocuments.1.file_name\n  Field required [type=missing, input_value={'file_id': 'F020', 'actu... 3000}], 'total': 4500}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing"
+  },
+  {
+    "case_id": 11,
+    "description": "One component of your system fails mid-processing (simulate with the flag below). The overall pipeline must continue, produce a decision, and make the failure visible in the output with an appropriately reduced confidence score.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "UNKNOWN",
+    "trace": "System Error: 2 validation errors for ClaimInput\ndocuments.0.file_name\n  Field required [type=missing, input_value={'file_id': 'F021', 'actu... 'Panchakarma Therapy'}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\ndocuments.1.file_name\n  Field required [type=missing, input_value={'file_id': 'F022', 'actu...ion', 'amount': 1000}]}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing"
+  },
+  {
+    "case_id": 12,
+    "description": "Member claims for bariatric consultation and a diet program. Obesity treatment is explicitly excluded under the policy.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "UNKNOWN",
+    "trace": "System Error: 2 validation errors for ClaimInput\ndocuments.0.file_name\n  Field required [type=missing, input_value={'file_id': 'F023', 'actu... Customised Diet Plan'}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\ndocuments.1.file_name\n  Field required [type=missing, input_value={'file_id': 'F024', 'actu... 5000}], 'total': 8000}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing"
+  }
+]

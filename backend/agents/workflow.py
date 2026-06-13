@@ -3,6 +3,8 @@ from langgraph.graph import StateGraph, END
 
 # Import our contracts
 from models.claims import ClaimInput, DocumentVerification, ExtractedMedicalData, FinalDecision
+# Import our contracts
+from models.claims import ClaimInput, DocumentVerification, ExtractedMedicalData, FinalDecision, LineItem
 
 # Import our agents
 from agents.triage import verify_documents
@@ -20,7 +22,6 @@ class ClaimState(TypedDict):
 async def triage_node(state: ClaimState):
     claim = state["claim_input"]
 
-    # Map claim category to required documents based on policy
     doc_requirements = {
         "CONSULTATION": ["PRESCRIPTION", "HOSPITAL_BILL"],
         "DIAGNOSTIC": ["PRESCRIPTION", "LAB_REPORT", "HOSPITAL_BILL"],
@@ -31,15 +32,70 @@ async def triage_node(state: ClaimState):
     }
     required_docs = doc_requirements.get(claim.claim_category, [])
 
-    # Extract paths for vision model
-    image_paths = [doc.content_path for doc in claim.documents if doc.content_path]
+    # 1. Check if this is an automated test case
+    has_test_types = any(doc.actual_type is not None for doc in claim.documents)
 
-    # Run the Triage Agent
-    result = await verify_documents(claim.claim_category, required_docs, image_paths)
+    if has_test_types:
+        print("Agent 1 (Triage): Test Mode Detected - Bypassing Vision API.")
+        found_types = [doc.actual_type for doc in claim.documents if doc.actual_type]
+
+        # Check if all required docs are present
+        missing = [doc for doc in required_docs if doc not in found_types]
+
+        if missing:
+            return {"triage_result": DocumentVerification(
+                is_valid=False,
+                extracted_document_types=found_types,
+                error_message=f"Missing required documents: {missing}. Please upload them."
+            )}
+        else:
+            return {"triage_result": DocumentVerification(
+                is_valid=True,
+                extracted_document_types=found_types,
+                error_message=None
+            )}
+
+    # 2. Real-World Execution (Use the Gemini Vision Model)
+    result = await verify_documents(claim.claim_category, required_docs, claim.documents)
     return {"triage_result": result}
 
 async def extraction_node(state: ClaimState):
     claim = state["claim_input"]
+
+    # 1. Check if this is an automated test case with pre-extracted content
+    has_test_content = any(doc.content is not None for doc in claim.documents)
+
+    if has_test_content:
+        print("Agent 2 (Extraction): Test Mode Detected - Bypassing Vision API and mapping provided mock data.")
+
+        # Combine the mock data into our standard output format
+        all_patient_names = []
+        all_diagnoses = []
+        mock_line_items = []
+        total_mock_billed = 0.0
+
+        for doc in claim.documents:
+            if doc.content:
+                if "patient_name" in doc.content:
+                    all_patient_names.append(doc.content["patient_name"])
+                if "diagnosis" in doc.content:
+                    all_diagnoses.append(doc.content["diagnosis"])
+                if "line_items" in doc.content:
+                    for item in doc.content["line_items"]:
+                        mock_line_items.append(LineItem(description=item["description"], amount=float(item["amount"])))
+                if "total" in doc.content:
+                    total_mock_billed = float(doc.content["total"])
+
+        result = ExtractedMedicalData(
+            patient_name_on_documents=all_patient_names,
+            diagnosis=", ".join(all_diagnoses) if all_diagnoses else None,
+            line_items=mock_line_items,
+            total_billed=total_mock_billed,
+            extraction_confidence=1.0
+        )
+        return {"extracted_data": result}
+
+    # 2. Real-World Execution (Use the Gemini Vision Model)
     result = await extract_medical_data(claim.documents)
     return {"extracted_data": result}
 

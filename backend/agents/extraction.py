@@ -13,7 +13,7 @@ load_dotenv()
 # We use Gemini 2.5-flash here specifically because its massive context window
 # and native multimodal capabilities are best-in-class for messy handwriting.
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
+    model="gemini-2.5-flash", 
     temperature=0.0, # Zero creativity, maximum precision
     max_retries=2
 )
@@ -53,18 +53,29 @@ async def extract_medical_data(documents: List[DocumentUpload]) -> ExtractedMedi
 
     message_content = [{"type": "text", "text": prompt_text}]
 
-    # Attach images, but also tell the LLM which file is which so it can populate 'unreadable_documents' accurately
+    # THE FIX: Safely pull the image from either the UI base64 data OR the local test path
     for doc in documents:
-        if doc.content_path:
-            try:
-                base64_image = encode_image(doc.content_path)
-                message_content.append({"type": "text", "text": f"--- Document: {doc.file_name} ---"})
-                message_content.append({
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
-                })
-            except Exception as e:
-                print(f"Warning: Could not load image {doc.content_path}: {e}")
+        try:
+            base_img = None
+            if doc.base64_data:
+                base_img = doc.base64_data
+            elif doc.content_path:
+                base_img = encode_image(doc.content_path)
+
+            if not base_img:
+                continue
+
+            # Strip the HTML data URI prefix sent by the browser
+            if "base64," in base_img:
+                base_img = base_img.split("base64,")[1]
+
+            message_content.append({"type": "text", "text": f"--- Document: {doc.file_name} ---"})
+            message_content.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:image/jpeg;base64,{base_img}"}
+            })
+        except Exception as e:
+            print(f"Warning: Could not load image {doc.file_name}: {e}")
 
     message = HumanMessage(content=message_content)
 

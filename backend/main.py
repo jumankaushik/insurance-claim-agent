@@ -57,5 +57,21 @@ async def process_claim_endpoint(claim: ClaimInput):
         # If the graph completely crashes, return a 500
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/eval-results")
+def get_eval_results():
+    import os
+    import json
+    from fastapi import HTTPException
+
+    # Find the data folder
+    ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    RESULTS_PATH = os.path.join(ROOT_DIR, "data", "eval_results.json")
+
+    if not os.path.exists(RESULTS_PATH):
+        raise HTTPException(status_code=404, detail="Evaluation results not found. Run evaluate.py first.")
+
+    with open(RESULTS_PATH, "r") as f:
+        return json.load(f)
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

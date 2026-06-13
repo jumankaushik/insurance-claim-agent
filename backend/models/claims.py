@@ -6,11 +6,15 @@ from typing import List, Optional, Literal
 # ---------------------------------------------------------
 
 class DocumentUpload(BaseModel):
-    file_id: str
-    file_name: str
-    # In a real system, this would be a URL or base64 string.
-    # For this assignment, we might mock the OCR or pass the path.
-    content_path: Optional[str] = None
+    file_id: str = Field(description="Unique identifier for the file.")
+    file_name: Optional[str] = Field(default="test_doc", description="Original name of the uploaded file.")
+    content_path: Optional[str] = Field(default=None, description="Local path (used for mock testing).")
+    base64_data: Optional[str] = Field(default=None, description="Base64 encoded string of the file.")
+
+    # --- New fields to support automated test_cases.json ---
+    actual_type: Optional[str] = Field(default=None, description="The document type defined in test cases.")
+    content: Optional[dict] = Field(default=None, description="Pre-extracted text data from test cases.")
+    quality: Optional[str] = Field(default=None, description="Document quality flag from test cases.")
 
 class ClaimInput(BaseModel):
     member_id: str
