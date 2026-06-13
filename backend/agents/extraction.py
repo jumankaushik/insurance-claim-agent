@@ -31,20 +31,24 @@ async def extract_medical_data(documents: List[DocumentUpload]) -> ExtractedMedi
     """
 
     prompt_text = """
-    You are an expert medical claims data extraction agent.
-    Your job is to read the provided medical documents (prescriptions, hospital bills, etc.)
-    and extract the information into a strict, structured JSON format.
+    You are an expert Indian medical claims data extraction AI.
+    Your job is to read unstructured, messy medical documents (handwritten prescriptions, phone photos of bills, rubber-stamped invoices) and extract data into a strict JSON format.
 
-    INSTRUCTIONS & RULES:
-    1. Patient Names: Look for the patient name on EVERY document. Return a list of all unique names found. This is critical for catching mismatched documents.
-    2. Line Items: Extract every individual charge from the bills.
-       - If a line item appears to be for a cosmetic procedure (e.g., teeth whitening), experimental treatment, or something typically excluded by standard policies, set 'is_cosmetic_or_excluded' to True.
-    3. Total Billed: Calculate or extract the grand total billed across all documents.
-    4. Readability & Confidence:
-       - If a specific document is completely unreadable or extremely blurry, add its file_name to the 'unreadable_documents' list.
-       - Assign an 'extraction_confidence' score (0.0 to 1.0). Lower this score if handwriting is messy, parts are cut off, or text is obscured by stamps.
+    --- INDIAN MEDICAL CONTEXT & RULES ---
+    1. Doctor Registration: Extract the doctor's registration number. Note that Indian formats vary by state (e.g., KA/XXXXX/YYYY, MH/XXXXX/YYYY, DL/XXXXX/YYYY, AYUR/KL/XXXXX).
+    2. Diagnosis Shorthand: Expand common Indian medical shorthand.
+       - HTN -> Hypertension
+       - T2DM -> Type 2 Diabetes Mellitus
+       - URI -> Upper Respiratory Infection
 
-    Extract the data accurately despite messy handwriting, rubber stamps, or poor lighting.
+    --- HANDLING DOCUMENT QUALITY VARIATIONS ---
+    1. Multilingual Text: If you detect Hindi, Tamil, Telugu, or other regional languages mixed with English, extract the English fields as best as possible and set 'regional_language_detected' to True.
+    2. Obscured Text (Rubber Stamps/Shadows): If a stamp covers an amount or registration number, do your best to extract it but REDUCE the 'extraction_confidence' score. Do not fail the whole document.
+    3. Document Alterations: If you see amounts crossed out and rewritten by hand, add "DOCUMENT_ALTERATION" to the 'fraud_flags' list.
+    4. Duplicate Stamps: If you see stamps stating "DUPLICATE" or "COPY", add "DUPLICATE_STAMP" to the 'fraud_flags' list.
+    5. Patient Name Mismatch: Look for the patient name on EVERY document page. Return a list of all unique names found to help downstream agents catch mismatched documents.
+
+    Extract the data meticulously.
     """
 
     message_content = [{"type": "text", "text": prompt_text}]
