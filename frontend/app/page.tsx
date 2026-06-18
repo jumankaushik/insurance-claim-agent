@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, Beaker } from "lucide-react";
+import { Activity, Beaker, User } from "lucide-react";
 import Link from "next/link"; // Added Next.js router link
 import { usePipeline } from "../hooks/usePipeline";
 import ClaimForm from "../components/ClaimForm";
@@ -21,15 +21,28 @@ export default function ClaimsDashboard() {
           <p className="text-slate-500 mt-2 font-medium">Multi-Agent Claims Processing Architecture</p>
         </div>
 
-        {/* Goal #2: The Eval Result Button */}
-        <Link
-          href="/eval-report"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-white border border-slate-300 hover:border-blue-500 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition-all shadow-sm"
-        >
-          <Beaker size={18} /> Run Automated Evals
-        </Link>
+        {/* Header Actions */}
+        <div className="flex items-center gap-4">
+          {/* Goal #3: Admin Portal Link */}
+          <Link
+            href="/admin"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-slate-500 hover:text-slate-900 font-semibold text-sm flex items-center gap-2 transition-colors px-3 py-2 rounded hover:bg-slate-200"
+          >
+            <User size={18} /> Admin Portal
+          </Link>
+
+          {/* Goal #2: The Eval Result Button */}
+          <Link
+            href="/eval-report"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white border border-slate-300 hover:border-blue-500 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-all shadow-sm"
+          >
+            <Beaker size={18} /> Run Automated Evals
+          </Link>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

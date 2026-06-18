@@ -7,6 +7,10 @@ import uvicorn
 from models.claims import ClaimInput
 from agents.workflow import app as claim_workflow
 
+import time
+# In-memory database to hold claims submitted from the UI
+live_manual_claims = []
+
 # Initialize the FastAPI application
 app = FastAPI(title="Plum AI Claims Adjudicator", version="1.0.0")
 
@@ -39,6 +43,15 @@ async def process_claim_endpoint(claim: ClaimInput):
         # 2. Extract the final decision
         if "final_decision" in final_state and final_state["final_decision"] is not None:
             decision = final_state["final_decision"]
+
+            # --- NEW: Save live UI tests to the Admin Queue ---
+            live_manual_claims.insert(0, {
+                "case_id": f"LIVE-{claim.member_id}-{int(time.time())}",
+                "description": f"Live UI Submission - {claim.claim_category} at {claim.hospital_name}",
+                "actual": decision.decision,
+                "trace": decision.notes,
+                "is_manual": True
+            })
 
             # 3. Package the final decision WITH the full trace for the UI
             return {
@@ -100,6 +113,44 @@ async def trigger_evaluations():
     except Exception as e:
         from fastapi import HTTPException
         raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")
+
+from pydantic import BaseModel
+
+class AdminOverride(BaseModel):
+    decision: str
+    admin_notes: str
+
+@app.put("/api/admin/claims/{case_id}/override")
+async def override_claim_decision(case_id: str, payload: AdminOverride):
+    """
+    Simulates an Admin manually overriding a claim decision.
+    In a production system, this would update the claims database and trigger an email to the member.
+    """
+    # For the assignment demo, we just print to the server console and return success.
+    print(f"👮 ADMIN OVERRIDE on {case_id}: Changed to {payload.decision}. Reason: {payload.admin_notes}")
+
+    return {
+        "status": "success",
+        "message": f"Claim {case_id} successfully updated to {payload.decision}.",
+        "updated_decision": payload.decision
+    }
+
+@app.get("/api/admin/claims")
+def get_admin_queue():
+    import json
+    import os
+    eval_data = []
+    try:
+        # Load the automated 12 test cases
+        ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+        EVAL_PATH = os.path.join(ROOT_DIR, "eval_results.json")
+        with open(EVAL_PATH, "r") as f:
+            eval_data = json.load(f)
+    except Exception:
+        pass
+
+    # Return the live UI claims FIRST, followed by the automated eval cases
+    return live_manual_claims + eval_data
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
