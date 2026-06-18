@@ -11,7 +11,7 @@ export default function AdminDashboard() {
 
   // Fetch the processed claims (Live queue + Eval results)
   useEffect(() => {
-    fetch('http://localhost:8000/api/admin/claims') // <-- CHANGED THIS LINE
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/admin/claims`) // <-- CHANGED THIS LINE
       .then(res => res.json())
       .then(data => {
         setClaims(data);
@@ -25,7 +25,9 @@ export default function AdminDashboard() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`http://localhost:8000/api/admin/claims/${selectedClaim.case_id}/override`, {
+      // FIX: Added the environment variable fallback for the PUT request
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${API_URL}/api/admin/claims/${selectedClaim.case_id}/override`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ decision, admin_notes: adminNotes })
