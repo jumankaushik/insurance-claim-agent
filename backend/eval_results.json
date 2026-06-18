@@ -1,0 +1,98 @@
+[
+  {
+    "case_id": "TC001",
+    "description": "Member submits two prescriptions for a consultation claim that requires a prescription and a hospital bill.",
+    "passed": true,
+    "actual": "REJECTED",
+    "expected": "REJECTED / MANUAL_REVIEW",
+    "trace": "Triage Failed: Missing required documents: ['HOSPITAL_BILL']. Please upload them."
+  },
+  {
+    "case_id": "TC002",
+    "description": "Member uploads a valid prescription but a blurry, unreadable photo of their pharmacy bill.",
+    "passed": true,
+    "actual": "MANUAL_REVIEW",
+    "expected": "REJECTED / MANUAL_REVIEW",
+    "trace": "Routed to manual review. Documents were too blurry or messy to extract data reliably."
+  },
+  {
+    "case_id": "TC003",
+    "description": "The prescription is for Rajesh Kumar but the hospital bill is for a different patient, Arjun Mehta.",
+    "passed": true,
+    "actual": "MANUAL_REVIEW",
+    "expected": "REJECTED / MANUAL_REVIEW",
+    "trace": "Routed to manual review. Documents were too blurry or messy to extract data reliably."
+  },
+  {
+    "case_id": "TC004",
+    "description": "Complete, valid consultation claim with correct documents, valid member, covered treatment, within all limits.",
+    "passed": true,
+    "actual": "APPROVED",
+    "expected": "APPROVED",
+    "trace": "Patient name 'Rajesh Kumar' matches member records. Initial waiting period of 30 days met (214 days elapsed since join date 2024-04-01). Diagnosis 'Viral Fever' is covered. All line items are covered and not excluded.\nTotal claimed amount: 1500.0.\nHospital not in network, so 0% network discount applied.\nAmount after network discount: 1500.0.\n10% copay applied: 1500.0 * 10% = 150.0.\nAmount after copay: 1500.0 - 150.0 = 1350.0.\nCategory sub-limit for CONSULTATION is 2000.0.\nFinal approved amount is capped at the sub-limit: min(1350.0, 2000.0) = 1350.0."
+  },
+  {
+    "case_id": "TC005",
+    "description": "Member joined 2024-09-01. Claims for diabetes treatment on 2024-10-15, which is within the 90-day waiting period for diabetes.",
+    "passed": true,
+    "actual": "REJECTED",
+    "expected": "REJECTED",
+    "trace": "Patient name on documents matches member name. Claimed amount (3000.0) is within the per-claim limit (5000). However, the diagnosis 'Type 2 Diabetes Mellitus' has a specific waiting period of 90 days. The member joined on 2024-09-01, making the waiting period for this condition end on 2024-11-30. The treatment date 2024-10-15 falls within this waiting period. Therefore, the claim is rejected."
+  },
+  {
+    "case_id": "TC006",
+    "description": "Bill includes root canal treatment (covered) and teeth whitening (cosmetic, excluded). System must approve only the covered procedure.",
+    "passed": false,
+    "actual": "REJECTED",
+    "expected": "PARTIAL",
+    "trace": "Claim rejected because the total claimed amount (12000.0) exceeds the per-claim limit (5000.0) as per policy rules."
+  },
+  {
+    "case_id": "TC007",
+    "description": "MRI scan costing \u00e2\u201a\u00b915,000 submitted without pre-authorization. Policy requires pre-auth for MRI above \u00e2\u201a\u00b910,000.",
+    "passed": true,
+    "actual": "REJECTED",
+    "expected": "REJECTED",
+    "trace": "Claimed amount (15000.0) exceeds the general per-claim limit of 5000.0. As per policy, claims exceeding this limit are immediately rejected."
+  },
+  {
+    "case_id": "TC008",
+    "description": "Claimed amount of \u00e2\u201a\u00b97,500 exceeds the per-claim limit of \u00e2\u201a\u00b95,000.",
+    "passed": true,
+    "actual": "REJECTED",
+    "expected": "REJECTED",
+    "trace": "The total claimed amount of 7500.0 exceeds the policy's per-claim limit of 5000.0. Therefore, the claim is rejected."
+  },
+  {
+    "case_id": "TC009",
+    "description": "Member EMP008 has already submitted 3 claims today before this one arrives. This is the 4th claim from the same member on the same day.",
+    "passed": false,
+    "actual": "ERROR",
+    "expected": "MANUAL_REVIEW",
+    "trace": "System Error: 'NoneType' object has no attribute 'claim_id'"
+  },
+  {
+    "case_id": "TC010",
+    "description": "Valid claim at Apollo Hospitals, a network hospital. Network discount must be applied before co-pay.",
+    "passed": true,
+    "actual": "APPROVED",
+    "expected": "APPROVED",
+    "trace": "Patient name 'Deepak Shah' matches member name. Treatment date 2024-11-03 is 216 days after join date 2024-04-01, exceeding the 30-day initial waiting period. Claimed amount 4500.0 is within the per-claim limit of 5000.0. 'Acute Bronchitis' is not subject to a specific waiting period. All line items are covered and not excluded.\n\nDetailed calculation:\nLine Item: Consultation Fee (1500.0)\n- Hospital 'Apollo Hospitals' is in network, applying 20% network discount: 1500.0 - (1500.0 * 0.20) = 1500.0 - 300.0 = 1200.0\n- Applying 10% copay: 1200.0 - (1200.0 * 0.10) = 1200.0 - 120.0 = 1080.0\n- Category sub-limit for Consultation is 2000.0. 1080.0 is less than 2000.0, so no further reduction.\n- Approved for Consultation Fee: 1080.0\n\nLine Item: Medicines (3000.0)\n- Hospital 'Apollo Hospitals' is in network, applying 20% network discount: 3000.0 - (3000.0 * 0.20) = 3000.0 - 600.0 = 2400.0\n- Applying 10% copay: 2400.0 - (2400.0 * 0.10) = 2400.0 - 240.0 = 2160.0\n- The category sub-limit of 2000.0 applies only to Consultation fees and does not affect Medicines.\n- Approved for Medicines: 2160.0\n\nTotal Approved Amount: 1080.0 + 2160.0 = 3240.0"
+  },
+  {
+    "case_id": "TC011",
+    "description": "One component of your system fails mid-processing (simulate with the flag below). The overall pipeline must continue, produce a decision, and make the failure visible in the output with an appropriately reduced confidence score.",
+    "passed": false,
+    "actual": "REJECTED",
+    "expected": "APPROVED",
+    "trace": "Patient name on documents was not found/extracted, which does not match the member's name 'Kavita Nair'. As per policy rule, claims with mismatched or missing patient names on documents are rejected."
+  },
+  {
+    "case_id": "TC012",
+    "description": "Member claims for bariatric consultation and a diet program. Obesity treatment is explicitly excluded under the policy.",
+    "passed": true,
+    "actual": "REJECTED",
+    "expected": "REJECTED",
+    "trace": "The total claimed amount of 8000.0 exceeds the per-claim limit of 5000.0, leading to a full rejection as per policy rules."
+  }
+]

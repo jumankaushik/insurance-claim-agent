@@ -34,13 +34,10 @@ export default function EvalReport() {
   }, []);
 
   // Function to trigger the actual LangGraph agents
-  // Function to trigger the actual LangGraph agents
-  // Function to trigger the actual LangGraph agents
   const handleRunEvals = async () => {
     setIsEvaluating(true);
     setError(null);
     try {
-      // FIX: Changed endpoint path from /api/eval-results to /api/run-evaluations
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/run-evaluations`, {
         method: 'POST'
       });
@@ -50,15 +47,22 @@ export default function EvalReport() {
         throw new Error(errorData.detail || "Failed to run evaluations.");
       }
 
-      // Add a slight delay to allow the backend to write the file,
-      // or simply fetch again after an interval if tests take time.
-      setTimeout(() => {
-        fetchResults();
-      }, 2000); // 2-second buffer before reloading UI state
+      // Poll the backend every 5 seconds until it returns a 200 OK (meaning the file is written)
+      const pollInterval = setInterval(async () => {
+        try {
+          const checkRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/eval-results`);
+          if (checkRes.ok) {
+            clearInterval(pollInterval); // Stop asking
+            fetchResults(); // Render the data
+            setIsEvaluating(false); // Turn off the loading spinner
+          }
+        } catch (e) {
+          // Still loading or 404, keep waiting quietly
+        }
+      }, 5000);
 
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setIsEvaluating(false);
     }
   };
