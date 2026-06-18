@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+langchain-google-vertexai
+langchain-core
+pydantic
+python-dotenv
