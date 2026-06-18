@@ -1,47 +1,116 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle, Activity } from "lucide-react";
+import { CheckCircle, XCircle, Activity, Play, Clock, RefreshCw } from "lucide-react";
 
 export default function EvalReport() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isEvaluating, setIsEvaluating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Function to pull the latest results from the JSON file
+  const fetchResults = () => {
+    setLoading(true);
     fetch('http://localhost:8000/api/eval-results')
       .then(res => {
-        if (!res.ok) throw new Error("Could not fetch results. Did you run the evaluate.py script first?");
+        if (!res.ok) throw new Error("Could not fetch results. Click 'Run All Test Cases' to generate them.");
         return res.json();
       })
       .then(data => {
         setResults(data);
+        setError(null);
         setLoading(false);
       })
       .catch(err => {
         setError(err.message);
         setLoading(false);
       });
+  };
+
+  // Load results when the page opens
+  useEffect(() => {
+    fetchResults();
   }, []);
+
+  // Function to trigger the actual LangGraph agents
+  const handleRunEvals = async () => {
+    setIsEvaluating(true);
+    setError(null);
+    try {
+      const res = await fetch('http://localhost:8000/api/run-evaluations', {
+        method: 'POST'
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || "Failed to run evaluations.");
+      }
+
+      // Once the backend finishes running the tests, fetch the new results
+      fetchResults();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsEvaluating(false);
+    }
+  };
+
+  // Calculate quick stats
+  const passCount = results.filter(r => r.passed).length;
+  const totalCount = results.length;
 
   return (
     <div className="min-h-screen bg-slate-50 p-8 font-sans text-slate-900">
-      <header className="mb-8 border-b pb-4 max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Activity className="text-blue-600" /> Evaluation Report
-        </h1>
-        <p className="text-slate-500 mt-2">Automated trace validation against test_cases.json</p>
+      <header className="mb-8 border-b pb-6 max-w-5xl mx-auto flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Activity className="text-blue-600" /> Evaluation & Compliance Report
+          </h1>
+          <p className="text-slate-500 mt-2">Automated trace validation against policy ground-truth</p>
+        </div>
+
+        {/* The New Trigger Button */}
+        <button
+          onClick={handleRunEvals}
+          disabled={isEvaluating}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50 shadow-md"
+        >
+          {isEvaluating ? <Clock className="animate-spin" size={20} /> : <Play size={20} fill="currentColor" />}
+          {isEvaluating ? "Agents Processing (Est. 1-2 mins)..." : "Run All 12 Test Cases"}
+        </button>
       </header>
 
       <div className="max-w-5xl mx-auto space-y-4">
-        {loading && <div className="text-slate-500 font-medium">Loading evaluation results...</div>}
 
-        {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200">
-            {error}
+        {/* Stats Bar */}
+        {!loading && !error && totalCount > 0 && (
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-6 mb-6">
+            <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">System Score</div>
+            <div className="text-2xl font-black text-slate-800">{passCount} / {totalCount} Passed</div>
+            <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
+              <div
+                className="bg-green-500 h-full rounded-full transition-all duration-1000"
+                style={{ width: `${(passCount / totalCount) * 100}%` }}
+              />
+            </div>
           </div>
         )}
 
+        {loading && !isEvaluating && (
+          <div className="text-slate-500 font-medium flex items-center gap-2">
+            <RefreshCw className="animate-spin" size={16} /> Fetching evaluation records...
+          </div>
+        )}
+
+        {error && !isEvaluating && (
+          <div className="bg-red-50 text-red-700 p-6 rounded-xl border border-red-200 text-center">
+            <p className="font-bold text-lg mb-2">{error}</p>
+            <p className="text-sm text-red-600">Click the blue button above to initialize the testing sequence.</p>
+          </div>
+        )}
+
+        {/* The Results List */}
         {!loading && !error && results.map((res) => (
           <div key={res.case_id} className={`p-5 rounded-xl border shadow-sm ${res.passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
             <div className="flex items-center justify-between mb-3">

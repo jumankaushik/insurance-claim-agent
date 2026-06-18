@@ -57,6 +57,21 @@ async def process_claim_endpoint(claim: ClaimInput):
         # If the graph completely crashes, return a 500
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/test-cases")
+def get_test_cases():
+    import os
+    import json
+
+    ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    TEST_CASES_PATH = os.path.join(ROOT_DIR, "data", "test_cases.json")
+
+    with open(TEST_CASES_PATH, "r") as f:
+        data = json.load(f)
+        # Ensure we always return the list of cases, regardless of JSON shape
+        if isinstance(data, dict) and "test_cases" in data:
+            return data["test_cases"]
+        return list(data.values()) if isinstance(data, dict) else data
+
 @app.get("/api/eval-results")
 def get_eval_results():
     import os
@@ -72,6 +87,19 @@ def get_eval_results():
 
     with open(RESULTS_PATH, "r") as f:
         return json.load(f)
+
+# Import the run_eval function from your evaluate script
+from evaluate import run_eval
+
+@app.post("/api/run-evaluations")
+async def trigger_evaluations():
+    try:
+        # Trigger the LangGraph evaluation script
+        await run_eval()
+        return {"status": "success", "message": "All test cases evaluated successfully."}
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
