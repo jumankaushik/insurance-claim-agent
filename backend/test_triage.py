@@ -1,37 +1,37 @@
 import asyncio
-import json
+from models.claims import DocumentUpload
 from agents.triage import verify_documents
 
 async def run_triage_test():
-    print("--- Testing Agent 1: Triage (TC001 Simulation) ---")
+    print("--- 🛡️ Testing Agent 1: Triage ONLY ---")
 
-    # We are simulating a 'CONSULTATION' claim.
-    # The policy says this requires a PRESCRIPTION and a HOSPITAL_BILL.
-    category = "CONSULTATION"
+    # 1. Define what the policy requires for this test
+    claim_category = "CONSULTATION"
     required_docs = ["PRESCRIPTION", "HOSPITAL_BILL"]
 
-    # Point this to the dummy image you just saved
-    # We are passing the same image twice to simulate the user uploading two of the same wrong documents
-    uploaded_images = [
-        "data/dummy_doc.jpg",
-        "data/dummy_doc.jpg"
+    # 2. Mock the documents the user uploaded (using local paths)
+    docs_to_process = [
+        DocumentUpload(
+            file_id="DOC_001",
+            file_name="rx.jpg",
+            content_path="data/mock_prescription_v2.jpg" # Make sure this file exists!
+        ),
+        DocumentUpload(
+            file_id="DOC_002",
+            file_name="bill.jpg",
+            content_path="data/mock_hospital_bill_v2.jpg" # Make sure this file exists!
+        )
     ]
 
     try:
-        # Call the agent
-        result = await verify_documents(
-            claim_category=category,
-            required_doc_types=required_docs,
-            image_paths=uploaded_images
-        )
+        # 3. Call the Triage Agent directly, bypassing the rest of the graph
+        result = await verify_documents(claim_category, required_docs, docs_to_process)
 
-        # Print the structured Pydantic output
         print("\n✅ Triage Agent Execution Complete!")
         print(result.model_dump_json(indent=2))
 
     except Exception as e:
-        print(f"\n❌ Error connecting to Gemini: {e}")
+        print(f"\n❌ Error during triage: {e}")
 
 if __name__ == "__main__":
-    # Because our agent uses async/await, we run it via asyncio
     asyncio.run(run_triage_test())
