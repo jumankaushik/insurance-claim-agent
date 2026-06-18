@@ -23,7 +23,7 @@ export default function ClaimForm({ onRun, isLoading }: ClaimFormProps) {
 
   // Fetch test cases on load
   useEffect(() => {
-    fetch("http://localhost:8000/api/test-cases")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/test-cases`)
       .then(res => res.json())
       .then(data => {
         setTestCases(data);
