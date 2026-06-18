@@ -1,6 +1,9 @@
 fastapi
 uvicorn
-langchain-google-vertexai
+langchain
 langchain-core
+langchain-google-vertexai
+langchain-google-genai
+langgraph
 pydantic
 python-dotenv
