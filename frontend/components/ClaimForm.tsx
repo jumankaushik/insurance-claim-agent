@@ -22,6 +22,7 @@ export default function ClaimForm({ onRun, isLoading }: ClaimFormProps) {
   const [selectedTestCaseId, setSelectedTestCaseId] = useState<string>("");
 
   // Fetch test cases on load
+  //Localhost to production
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/test-cases`)
       .then(res => res.json())

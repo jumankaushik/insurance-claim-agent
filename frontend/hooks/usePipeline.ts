@@ -12,7 +12,9 @@ export function usePipeline() {
     setResult(null);
     setError(null);
     try {
-      const response = await axios.post<PipelineResult>("http://localhost:8000/api/process-claim", payload);
+      // FIX: Use the environment variable for the backend URL
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await axios.post<PipelineResult>(`${API_URL}/api/process-claim`, payload);
       setResult(response.data);
     } catch (err: any) {
       setError(err.response?.data?.detail || "An error occurred connecting to the backend.");
