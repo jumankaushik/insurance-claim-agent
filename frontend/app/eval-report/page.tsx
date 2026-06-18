@@ -35,11 +35,13 @@ export default function EvalReport() {
 
   // Function to trigger the actual LangGraph agents
   // Function to trigger the actual LangGraph agents
+  // Function to trigger the actual LangGraph agents
   const handleRunEvals = async () => {
     setIsEvaluating(true);
     setError(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/eval-results`, {
+      // FIX: Changed endpoint path from /api/eval-results to /api/run-evaluations
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/run-evaluations`, {
         method: 'POST'
       });
 
