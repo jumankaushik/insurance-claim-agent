@@ -91,9 +91,9 @@ def get_eval_results():
     import json
     from fastapi import HTTPException
 
-    # Find the data folder
-    ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    RESULTS_PATH = os.path.join(ROOT_DIR, "data", "eval_results.json")
+    # Backtrack exactly once to point to the 'backend/' directory
+    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+    RESULTS_PATH = os.path.join(ROOT_DIR, "eval_results.json")
 
     if not os.path.exists(RESULTS_PATH):
         raise HTTPException(status_code=404, detail="Evaluation results not found. Run evaluate.py first.")
@@ -104,12 +104,15 @@ def get_eval_results():
 # Import the run_eval function from your evaluate script
 from evaluate import run_eval
 
+import asyncio
+from evaluate import run_eval
+
 @app.post("/api/run-evaluations")
 async def trigger_evaluations():
     try:
-        # Trigger the LangGraph evaluation script
-        await run_eval()
-        return {"status": "success", "message": "All test cases evaluated successfully."}
+        # Trigger the LangGraph evaluation script in the background without blocking the API
+        asyncio.create_task(run_eval())
+        return {"status": "success", "message": "Evaluation sequence started in the background."}
     except Exception as e:
         from fastapi import HTTPException
         raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")

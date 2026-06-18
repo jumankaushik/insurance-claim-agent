@@ -3,6 +3,7 @@ from typing import List
 from dotenv import load_dotenv
 
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_vertexai import ChatVertexAI
 from langchain_core.messages import HumanMessage
 
 # Importing our strict contracts
@@ -12,9 +13,11 @@ load_dotenv()
 
 # We use Gemini 2.5-flash here specifically because its massive context window
 # and native multimodal capabilities are best-in-class for messy handwriting.
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash", 
-    temperature=0.0, # Zero creativity, maximum precision
+llm = ChatVertexAI(
+    model_name="gemini-2.5-flash", # Note: LangChain uses 'model_name' here instead of 'model'
+    project="juman-gen-ai-project", # ⚠️ Replace with your actual GCP Project ID
+    location="us-central1",              # ⚠️ Ensure this matches your project location
+    temperature=0.0,
     max_retries=2
 )
 

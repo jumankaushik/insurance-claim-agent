@@ -12,7 +12,7 @@ export default function EvalReport() {
   // Function to pull the latest results from the JSON file
   const fetchResults = () => {
     setLoading(true);
-    fetch('http://localhost:8000/api/eval-results')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/eval-results`)
       .then(res => {
         if (!res.ok) throw new Error("Could not fetch results. Click 'Run All Test Cases' to generate them.");
         return res.json();
@@ -34,11 +34,12 @@ export default function EvalReport() {
   }, []);
 
   // Function to trigger the actual LangGraph agents
+  // Function to trigger the actual LangGraph agents
   const handleRunEvals = async () => {
     setIsEvaluating(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:8000/api/run-evaluations', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/eval-results`, {
         method: 'POST'
       });
 
@@ -47,8 +48,12 @@ export default function EvalReport() {
         throw new Error(errorData.detail || "Failed to run evaluations.");
       }
 
-      // Once the backend finishes running the tests, fetch the new results
-      fetchResults();
+      // Add a slight delay to allow the backend to write the file,
+      // or simply fetch again after an interval if tests take time.
+      setTimeout(() => {
+        fetchResults();
+      }, 2000); // 2-second buffer before reloading UI state
+
     } catch (err: any) {
       setError(err.message);
     } finally {

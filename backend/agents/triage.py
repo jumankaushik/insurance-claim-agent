@@ -3,20 +3,22 @@ import base64
 from typing import List
 from dotenv import load_dotenv
 
-# LangChain imports
+# Standard API Import
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_vertexai import ChatVertexAI
 from langchain_core.messages import HumanMessage
 
 # Our strict Pydantic contract
 from models.claims import DocumentVerification, DocumentUpload
 
-# Load environment variables (API Key)
+# Load environment variables
 load_dotenv()
 
-# Initialize the Gemini 1.5 Pro model
-# We set temperature to 0.0 because we want highly deterministic categorization, not creative writing.
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
+# Initialize the Standard Gemini API
+llm = ChatVertexAI(
+    model_name="gemini-2.5-flash", # Note: LangChain uses 'model_name' here instead of 'model'
+    project="juman-gen-ai-project", # ⚠️ Replace with your actual GCP Project ID
+    location="us-central1",              # ⚠️ Ensure this matches your project location
     temperature=0.0,
     max_retries=2
 )

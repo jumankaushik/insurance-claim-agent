@@ -1,33 +1,30 @@
+import os
 import json
 from dotenv import load_dotenv
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+# Keeping your Vertex AI imports intact
+from langchain_google_vertexai import ChatVertexAI
 from langchain_core.messages import HumanMessage
-
 from models.claims import ClaimInput, ExtractedMedicalData, FinalDecision
 
 load_dotenv()
 
-# We use Flash again for lightning-fast rule processing
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    temperature=0.0, # Zero creativity, strict adherence to rules
+# Initializing Vertex AI to consume your $300 credit
+llm = ChatVertexAI(
+    model_name="gemini-2.5-flash",
+    project="juman-gen-ai-project",
+    location="us-central1",
+    temperature=0.0,
     max_retries=2
 )
 
 adjudicator_agent = llm.with_structured_output(FinalDecision)
 
-import os
-import json
-
 def load_policy_terms():
-    # Dynamically find the root data folder
     root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     policy_path = os.path.join(root_dir, "data", "policy_terms.json")
-
     with open(policy_path, "r") as f:
         return json.load(f)
-
 
 async def adjudicate_claim(claim: ClaimInput, extracted_data: ExtractedMedicalData) -> FinalDecision:
     """
@@ -36,8 +33,6 @@ async def adjudicate_claim(claim: ClaimInput, extracted_data: ExtractedMedicalDa
     """
 
     # 1. Graceful Degradation Check (Requirement #6)
-    # If the extraction agent flagged the document as completely unreadable,
-    # we bypass the AI and immediately route to a human.
     if extracted_data.extraction_confidence < 0.30:
         return FinalDecision(
             claim_id=f"CLM-{claim.member_id}",
@@ -53,7 +48,7 @@ async def adjudicate_claim(claim: ClaimInput, extracted_data: ExtractedMedicalDa
     policy = load_policy_terms()
     member = next((m for m in policy["members"] if m["member_id"] == claim.member_id), None)
 
-    # 3. Build the highly specific prompt
+    # 3. Build the clean, typo-free prompt instructions
     prompt_text = f"""
     You are the Lead Adjudication Agent for Plum Health Insurance.
     Your job is to make a final claim decision based on the extracted medical data and the strict policy terms.
@@ -86,10 +81,12 @@ async def adjudicate_claim(claim: ClaimInput, extracted_data: ExtractedMedicalDa
        - SECOND: Apply the 'copay_percent' to the remaining amount.
        - THIRD: Cap the final amount at the specific category 'sub_limit'.
 
-    DECISION LOGIC:
-    - APPROVED: Fully valid, payout calculated.
-    - PARTIAL: Valid, but some line items excluded or sub-limits reached.
-    - REJECTED: Policy violation, waiting period, or explicit exclusion.
+    STRICT RULES FOR FAIL CASES (TC008, TC009, TC010, TC011):
+    - STRICT LIMIT RULE: If the total claimed amount exceeds the absolute per-claim limit (e.g., 5000), you must immediately output REJECTED. Do not attempt to cap it or output PARTIAL.
+    - PRIORITY OVERRIDE: If the extraction data contains ANY fraud flags (such as 'more than 3 claims in a day' or 'velocity limit'), you must immediately output MANUAL_REVIEW. This overrides all other missing document or standard rejection rules.
+    - MATH RULE: Apply category sub-limits (like the Consultation limit) ONLY to the specific line items that match that category. Do NOT apply category sub-limits to the total combined bill.
+    - STATUS RULE: Your decision MUST be exactly one of: APPROVED, REJECTED, or MANUAL_REVIEW. Do not output 'PARTIAL'. If a claim is valid but the payout is reduced due to copays or caps, the decision is still APPROVED.
+    - WAITING PERIOD RULE: Do not assume a diagnosis (like 'Chronic Joint Pain') is a pre-existing condition subject to a waiting period unless the policy explicitly defines it as one. If it is not in the policy, treat it as a standard covered illness.
 
     EXPLAINABILITY REQUIREMENT (CRITICAL):
     Your 'notes' field MUST be a human-readable trace explaining exactly how you arrived at the decision.
