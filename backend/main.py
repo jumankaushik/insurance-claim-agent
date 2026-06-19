@@ -102,10 +102,9 @@ def get_eval_results():
         return json.load(f)
 
 # Import the run_eval function from your evaluate script
-from evaluate import run_eval
 
 import asyncio
-from evaluate import run_eval
+from evaluate import run_eval, EVAL_STATE
 
 @app.post("/api/run-evaluations")
 async def trigger_evaluations():
@@ -154,6 +153,11 @@ def get_admin_queue():
 
     # Return the live UI claims FIRST, followed by the automated eval cases
     return live_manual_claims + eval_data
+
+@app.get("/api/eval-status")
+def get_eval_status():
+    """Exposes the internal live run state of the evaluation suite."""
+    return EVAL_STATE
 
 if __name__ == "__main__":
     import os

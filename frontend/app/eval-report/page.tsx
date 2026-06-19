@@ -47,17 +47,22 @@ export default function EvalReport() {
         throw new Error(errorData.detail || "Failed to run evaluations.");
       }
 
-      // Poll the backend every 5 seconds until it returns a 200 OK (meaning the file is written)
+      // FIX: Poll the explicit status endpoint instead of checking the raw file existence
       const pollInterval = setInterval(async () => {
         try {
-          const checkRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/eval-results`);
+          const checkRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/eval-status`);
           if (checkRes.ok) {
-            clearInterval(pollInterval); // Stop asking
-            fetchResults(); // Render the data
-            setIsEvaluating(false); // Turn off the loading spinner
+            const statusData = await checkRes.json();
+
+            // The file is ready ONLY when the backend shifts out of the running state
+            if (statusData.is_running === false) {
+              clearInterval(pollInterval);
+              fetchResults(); // Pull the fresh JSON data
+              setIsEvaluating(false); // Remove spinner
+            }
           }
         } catch (e) {
-          // Still loading or 404, keep waiting quietly
+          // Keep polling quietly through temporary network hiccups
         }
       }, 5000);
 
